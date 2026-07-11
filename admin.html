@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>관리자 | 26' 초대교회 예배여행 접수현황</title>
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body class="admin-shell">
+
+<!-- 비밀번호 게이트 -->
+<div class="admin-gate" id="adminGate">
+  <div class="admin-gate-card">
+    <p class="eyebrow" style="color:var(--rust);">Admin</p>
+    <h1>접수현황 관리자 페이지</h1>
+    <input type="password" id="gatePassword" placeholder="비밀번호를 입력하세요" autocomplete="current-password">
+    <button type="button" id="gateSubmit">입장하기</button>
+    <p class="admin-gate-error" id="gateError"></p>
+  </div>
+</div>
+
+<!-- 관리자 대시보드 -->
+<div class="admin-main" id="adminMain" style="display:none;">
+  <div class="admin-header">
+    <div>
+      <p class="eyebrow">Dashboard</p>
+      <h1>세미나 접수현황</h1>
+    </div>
+    <div class="admin-controls">
+      <span class="status-pill" id="statusPill">불러오는 중</span>
+      <span class="admin-count" id="rowCount"></span>
+      <button type="button" id="refreshBtn">새로고침</button>
+      <button type="button" id="logoutBtn">로그아웃</button>
+    </div>
+  </div>
+
+  <div class="admin-table-wrap">
+    <table class="admin-table" id="adminTable">
+      <thead>
+        <tr>
+          <th>접수일시</th>
+          <th>이름</th>
+          <th>성별</th>
+          <th>생년월</th>
+          <th>핸드폰번호</th>
+        </tr>
+      </thead>
+      <tbody id="adminTableBody">
+        <tr><td colspan="5" class="admin-loading">데이터를 불러오는 중입니다...</td></tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.2.0/crypto-js.min.js"></script>
+<script src="js/config.js"></script>
+<script src="js/admin.js"></script>
+</body>
+</html>
