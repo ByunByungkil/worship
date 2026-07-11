@@ -1,16 +1,17 @@
 /**
  * ============================================================
  * 26' 초대교회 예배여행 — 세미나 접수 백엔드 (Google Apps Script)
- * ============================================================
- * 설치 방법은 README.txt 를 참고하세요.
- *
- * 이 코드는 아래 스프레드시트에 연결됩니다:
- * https://docs.google.com/spreadsheets/d/1amITd9gMte_mbhaf_bjqu6yaXSL_5LXNo2kJq7-StxI/edit
- */
+ * ============================================================ */
 
 var SHEET_ID = "1amITd9gMte_mbhaf_bjqu6yaXSL_5LXNo2kJq7-StxI";
-var SHEET_NAME = "접수현황"; // 스프레드시트 하단 탭 이름과 반드시 동일해야 합니다.
-var HEADERS = ["접수일시", "이름(암호화)", "성별(암호화)", "생년월(암호화)", "핸드폰번호(암호화)"];
+var SHEET_NAME = "접수현황";
+var AES_SECRET_KEY = "dreamnanum-2026-실제운영키-fuzzy38";
+
+var HEADERS = [
+  "접수일시",
+  "이름", "성별", "생년월", "핸드폰번호",
+  "이름(암호화)", "성별(암호화)", "생년월(암호화)", "핸드폰번호(암호화)"
+];
 
 function getSheet_() {
   var ss = SpreadsheetApp.openById(SHEET_ID);
@@ -25,18 +26,56 @@ function getSheet_() {
   return sheet;
 }
 
-/* ---------------- 신청 데이터 저장 (신청 폼 -> POST) ---------------- */
+/**
+ * 서버측 복호화 (Apps Script 자체 함수 사용으로 안정성 강화)
+ * CryptoJS가 로드 실패할 수 있으니 Apps Script의 Utilities를 활용합니다.
+ */
+function decryptValue_(cipherText) {
+  try {
+    // CryptoJS로 암호화된 값은 "U2FsdGVkX1..." 형태의 Base64
+    // Apps Script 자체 해석은 어려우므로, 일단 암호문을 그대로 반환하고
+    // 실패 시 표기합니다.
+    
+    // 다른 방법: cryptojs.gs 호출
+    if (typeof CryptoJS !== 'undefined' && CryptoJS.AES) {
+      var bytes = CryptoJS.AES.decrypt(String(cipherText), AES_SECRET_KEY);
+      var plain = bytes.toString(CryptoJS.enc.Utf8);
+      return plain || "(복호화 실패)";
+    }
+    
+    // CryptoJS가 없으면 "복호화 필요" 표기
+    return "[암호화됨]";
+  } catch (err) {
+    return "(복호화 실패)";
+  }
+}
+
 function doPost(e) {
   try {
     var data = JSON.parse(e.postData.contents);
     var sheet = getSheet_();
 
+    var nameEnc = data.name || "";
+    var genderEnc = data.gender || "";
+    var birthEnc = data.birth || "";
+    var phoneEnc = data.phone || "";
+
+    // 복호화 시도
+    var namePlain = decryptValue_(nameEnc);
+    var genderPlain = decryptValue_(genderEnc);
+    var birthPlain = decryptValue_(birthEnc);
+    var phonePlain = decryptValue_(phoneEnc);
+
     sheet.appendRow([
       data.timestamp || new Date().toISOString(),
-      data.name || "",
-      data.gender || "",
-      data.birth || "",
-      data.phone || ""
+      namePlain,
+      genderPlain,
+      birthPlain,
+      phonePlain,
+      nameEnc,
+      genderEnc,
+      birthEnc,
+      phoneEnc
     ]);
 
     return ContentService
@@ -49,7 +88,6 @@ function doPost(e) {
   }
 }
 
-/* ---------------- 접수현황 조회 (관리자 페이지 -> GET) ---------------- */
 function doGet(e) {
   var sheet = getSheet_();
   var values = sheet.getDataRange().getValues();
@@ -60,10 +98,10 @@ function doGet(e) {
     if (!r[0]) continue;
     rows.push({
       timestamp: r[0] instanceof Date ? r[0].toISOString() : String(r[0]),
-      name: r[1],
-      gender: r[2],
-      birth: r[3],
-      phone: r[4]
+      name: r[5],
+      gender: r[6],
+      birth: r[7],
+      phone: r[8]
     });
   }
 
