@@ -7,7 +7,7 @@ window.SEMINAR_CONFIG = {
   // 1) Google Apps Script 웹앱 배포 URL
   //    (code.gs 를 스프레드시트에 붙여넣고 "웹 앱으로 배포" 한 뒤 나오는 URL)
   //    예: "https://script.google.com/macros/s/AKfycbxxxxxxxx/exec"
-  GAS_WEB_APP_URL: "https://script.google.com/macros/s/https://script.google.com/macros/s/AKfycbyPRBPA1YvYWNXOCbcSvw6GnX1gLAjDvONrHxPXWwQaA8NQTpPqCRiOOV3fQWhmWdJSzg/exec/exec",
+  GAS_WEB_APP_URL: "https://script.google.com/macros/s/AKfycbwjqRgMIpvA9SRNWSMbn7zuYf9BumjNj_dBnZBuMv_bBa6yrwuQtoQw5q8Vy6jTq5I8AA/exec/exec",
 
   // 2) 신청자 개인정보 암호화에 쓰이는 비밀키 (AES).
   //    admin.js 의 키와 반드시 동일해야 복호화됩니다.
