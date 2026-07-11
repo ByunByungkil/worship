@@ -184,8 +184,49 @@
 
         <div id="form-error" class="form-error" role="status" aria-live="polite"></div>
         <button type="button" class="btn-submit" id="submitBtn" onclick="handleSubmit()">신청 완료 → 결제하기</button>
-        <p class="payment-note">※ 신청 완료 후 네이버 스마트스토어로 이동하여 결제하실 수 있습니다.</p>
+        <p class="payment-note">※ 신청 완료 후 결제 방식을 선택하실 수 있습니다.</p>
       </form>
+    </div>
+  </div>
+</section>
+
+<!-- 계좌 입금 안내 (기본 숨김, 사용자가 입금 선택 시 표시) -->
+<section id="accountInfo" class="form-section" style="display:none;">
+  <div class="container">
+    <div class="form-card account-card">
+      <p class="eyebrow" style="color:var(--rust);">Bank Transfer</p>
+      <h2>계좌 입금 안내</h2>
+      <p class="form-lede">아래 계좌로 입금해주시면 접수가 완료됩니다.</p>
+
+      <div class="account-info">
+        <div class="account-item">
+          <label>예금주</label>
+          <p>유은숙(드림나눔선교회)</p>
+        </div>
+        <div class="account-item">
+          <label>은행</label>
+          <p>국민은행</p>
+        </div>
+        <div class="account-item">
+          <label>계좌번호</label>
+          <p class="account-number">274301-04-2033326</p>
+        </div>
+        <div class="account-item">
+          <label>입금액</label>
+          <p>50,000원 (회비)</p>
+        </div>
+      </div>
+
+      <div class="account-notice">
+        <p><strong>입금 시 유의사항</strong></p>
+        <ul>
+          <li>입금자명에 신청자 이름을 정확히 기재해주세요.</li>
+          <li>입금 후 조직위원회로 연락(010-3800-7575)해주시면 감사하겠습니다.</li>
+          <li>입금 확인 후 최종 참석 확정 안내를 드릴 예정입니다.</li>
+        </ul>
+      </div>
+
+      <button type="button" class="btn-secondary" onclick="document.getElementById('accountInfo').style.display='none'; document.getElementById('registerForm').scrollIntoView({behavior:'smooth'});">닫기</button>
     </div>
   </div>
 </section>
