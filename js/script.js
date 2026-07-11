@@ -5,14 +5,27 @@
   "use strict";
 
   var CONFIG = window.SEMINAR_CONFIG || {};
-  var form = document.getElementById("registerForm");
-  var submitBtn = document.getElementById("submitBtn");
-  var statusEl = document.getElementById("formStatus");
 
-  if (!form) return;
+  document.addEventListener("DOMContentLoaded", function () {
+    var form = document.getElementById("registerForm");
+    if (!form) return;
+
+    // Enter 키로 폼이 그대로 제출되는 것을 막고 handleSubmit 으로 위임
+    form.addEventListener("submit", function (e) {
+      e.preventDefault();
+      window.handleSubmit();
+    });
+
+    var birthInput = document.getElementById("f-birth");
+    if (birthInput) {
+      birthInput.addEventListener("input", function () {
+        this.value = this.value.replace(/[^0-9]/g, "").slice(0, 6);
+      });
+    }
+  });
 
   function setHint(field, message) {
-    var el = form.querySelector('[data-hint-for="' + field + '"]');
+    var el = document.querySelector('[data-hint-for="' + field + '"]');
     if (el) el.textContent = message || "";
   }
 
@@ -20,9 +33,11 @@
     ["name", "gender", "birth", "phone"].forEach(function (f) { setHint(f, ""); });
   }
 
-  function setStatus(message, type) {
-    statusEl.textContent = message || "";
-    statusEl.className = "form-status" + (type ? " is-" + type : "");
+  function setError(message, success) {
+    var el = document.getElementById("form-error");
+    if (!el) return;
+    el.textContent = message || "";
+    el.className = "form-error" + (success ? " is-success" : "");
   }
 
   /* ---------------- 입력값 검증 ---------------- */
@@ -66,9 +81,15 @@
     });
   }
 
-  form.addEventListener("submit", function (e) {
-    e.preventDefault();
-    setStatus("");
+  /* ---------------- 메인 제출 핸들러 ----------------
+     ⚠ 팝업 차단 방지 포인트:
+     새 창(window.open)은 반드시 "클릭 이벤트 안에서, 비동기 작업 이전에"
+     동기적으로 열어야 브라우저가 팝업으로 차단하지 않습니다.
+     fetch().then() 콜백 안에서 열면 사용자 제스처가 사라져 대부분 차단됩니다. */
+  window.handleSubmit = function () {
+    var form = document.getElementById("registerForm");
+    var submitBtn = document.getElementById("submitBtn");
+    setError("");
 
     var values = {
       name: form.name.value,
@@ -78,21 +99,29 @@
     };
 
     if (!document.getElementById("f-consent").checked) {
-      setStatus("개인정보 수집 및 이용에 동의해주세요.", "error");
+      setError("개인정보 수집 및 이용에 동의해주세요.");
       return;
     }
     if (!validate(values)) {
-      setStatus("입력하신 내용을 다시 확인해주세요.", "error");
+      setError("입력하신 내용을 다시 확인해주세요.");
+      return;
+    }
+    if (!CONFIG.GAS_WEB_APP_URL || CONFIG.GAS_WEB_APP_URL.indexOf("여기에") !== -1) {
+      setError("관리자 설정이 완료되지 않았습니다. (js/config.js 의 GAS_WEB_APP_URL 확인)");
       return;
     }
 
-    if (!CONFIG.GAS_WEB_APP_URL || CONFIG.GAS_WEB_APP_URL.indexOf("여기에") !== -1) {
-      setStatus("관리자 설정이 완료되지 않았습니다. (js/config.js 의 GAS_WEB_APP_URL 확인)", "error");
-      return;
+    // 1) 클릭과 동시에(동기적으로) 결제창을 미리 열어둔다 — 팝업 차단 방지 핵심.
+    var paymentWindow = window.open("about:blank", "_blank");
+    if (paymentWindow && paymentWindow.document) {
+      paymentWindow.document.title = "결제 페이지 준비 중...";
+      paymentWindow.document.body.innerHTML =
+        '<p style="font-family:sans-serif;padding:40px;text-align:center;">' +
+        "신청 정보를 저장하는 중입니다. 잠시만 기다려주세요...</p>";
     }
 
     submitBtn.disabled = true;
-    setStatus("신청 정보를 안전하게 저장하는 중입니다...", "");
+    setError("신청 정보를 안전하게 저장하는 중입니다...", true);
 
     var payload = {
       timestamp: new Date().toISOString(),
@@ -104,26 +133,22 @@
 
     sendToSheet(payload)
       .then(function () {
-        setStatus("신청이 완료되었습니다. 결제 페이지로 이동합니다...", "success");
+        // 2) 저장 성공 후, 미리 열어둔 창의 주소만 결제 페이지로 이동시킨다.
+        if (paymentWindow) {
+          paymentWindow.location.href = CONFIG.NAVER_STORE_URL;
+        } else {
+          // 팝업이 차단되었을 경우를 대비한 대체 동선(현재 탭에서 이동)
+          window.location.href = CONFIG.NAVER_STORE_URL;
+        }
         form.reset();
-        setTimeout(function () {
-          window.open(CONFIG.NAVER_STORE_URL, "_blank", "noopener");
-          submitBtn.disabled = false;
-          setStatus("결제 페이지가 새 창에서 열렸습니다. 결제를 완료해주세요.", "success");
-        }, 900);
+        submitBtn.disabled = false;
+        setError("신청이 완료되었습니다. 결제 페이지에서 결제를 진행해주세요.", true);
       })
       .catch(function (err) {
         console.error(err);
+        if (paymentWindow) paymentWindow.close();
         submitBtn.disabled = false;
-        setStatus("전송 중 오류가 발생했습니다. 잠시 후 다시 시도해주세요.", "error");
+        setError("전송 중 오류가 발생했습니다. 잠시 후 다시 시도해주세요.");
       });
-  });
-
-  /* 생년월 입력은 숫자만 허용 */
-  var birthInput = document.getElementById("f-birth");
-  if (birthInput) {
-    birthInput.addEventListener("input", function () {
-      this.value = this.value.replace(/[^0-9]/g, "").slice(0, 6);
-    });
-  }
+  };
 })();
